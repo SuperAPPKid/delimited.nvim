@@ -95,4 +95,31 @@ function M.goto_prev(opts, dopts)
 	return M.jump(opts, dopts)
 end
 
+function M.open_float(opts, dopts)
+	dopts = M.eval_config(dopts)
+
+	local bufnr = api.nvim_get_current_buf()
+	local cursor_position = vim.api.nvim_win_get_cursor(0)
+	local cursor_line = cursor_position[1] - 1
+
+	local diagnostics = vim.diagnostic.get(bufnr, opts)
+
+	local d
+	for _, diag in ipairs(diagnostics) do
+		if diag.lnum == cursor_line then
+			d = diag
+			break
+		end
+	end
+
+	if not d or not d.end_lnum or not d.end_col then
+		vim.diagnostic.open_float(opts)
+		return
+	end
+
+	local old_tracker = diagnostic_hl(d, dopts)
+	vim.diagnostic.open_float(opts)
+	diagnostic_hl_set_trigger(bufnr, old_tracker, dopts)
+end
+
 return M
