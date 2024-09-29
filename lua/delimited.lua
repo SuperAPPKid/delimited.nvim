@@ -84,15 +84,45 @@ function M.jump(opts, dopts)
 end
 
 function M.goto_next(opts, dopts)
-	local goto_opts = { count = 1, float = true }
-	local opts = opts and vim.tbl_extend("force", goto_opts, opts) or goto_opts
-	return M.jump(opts, dopts)
+	opts = opts or {}
+
+	if vim.fn.has("nvim-0.11.0") == 1 then
+		local goto_opts = { count = 1, float = true }
+		local opts = opts and vim.tbl_extend("force", goto_opts, opts) or goto_opts
+		return M.jump(opts, dopts)
+	end
+
+	dopts = M.eval_config(dopts)
+	local bufnr = api.nvim_get_current_buf()
+	local d = vim.diagnostic.get_next(opts)
+	if not d or not d.end_lnum or not d.end_col then
+		vim.diagnostic.goto_next(opts)
+		return
+	end
+	local old_tracker = diagnostic_hl(d, dopts)
+	vim.diagnostic.goto_next(opts)
+	diagnostic_hl_set_trigger(bufnr, old_tracker, dopts)
 end
 
 function M.goto_prev(opts, dopts)
-	local goto_opts = { count = -1, float = true }
-	local opts = opts and vim.tbl_extend("force", goto_opts, opts) or goto_opts
-	return M.jump(opts, dopts)
+	opts = opts or {}
+
+	if vim.fn.has("nvim-0.11.0") == 1 then
+		local goto_opts = { count = -1, float = true }
+		local opts = opts and vim.tbl_extend("force", goto_opts, opts) or goto_opts
+		return M.jump(opts, dopts)
+	end
+
+	dopts = M.eval_config(dopts)
+	local bufnr = api.nvim_get_current_buf()
+	local d = vim.diagnostic.get_prev(opts)
+	if not d or not d.end_lnum or not d.end_col then
+		vim.diagnostic.goto_prev(opts)
+		return
+	end
+	local old_tracker = diagnostic_hl(d, dopts)
+	vim.diagnostic.goto_prev(opts)
+	diagnostic_hl_set_trigger(bufnr, old_tracker, dopts)
 end
 
 function M.open_float(opts, dopts)
